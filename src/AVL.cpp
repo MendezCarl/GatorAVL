@@ -39,25 +39,25 @@ AVL::Node *AVL::helperInsert(Node* helpRoot, std::string name, int id) {
     } else {
         return helpRoot;
     }
-    updateHeight(helpRoot);
 
+    updateHeight(helpRoot);
     return balanceNode(helpRoot);
 }
 
 void AVL::insert(std::string name, int id) {
-    if (id >= 10000000 && id <= 99999999) {
+    if (id < 10000000 || id > 99999999) {
         std::cout << "unsuccessful" << std::endl;
         return;
     }
 
-    std::vector<int> values;
-    auto it = std::find(values.begin(), values.end(), id);
-    if (it != values.end()) {
+    if (searchNoPrint(id) != nullptr)
+    {
         std::cout << "unsuccessful" << std::endl;
         return;
     }
 
     this->root = helperInsert(this->getRoot(), name, id);
+    updateHeight(this->root);
     std::cout << "successful" << std::endl;
 }
 
@@ -93,7 +93,7 @@ void AVL::removeUser(int id) {
 
     //sees if the node exists
     while (currentNode && currentNode->id != id) {
-        std::cout << "running" << std::endl;
+        // std::cout << "running" << std::endl;
         prev = currentNode;
         if (currentNode->id < id) {
             currentNode = currentNode->right;
@@ -126,7 +126,7 @@ void AVL::removeUser(int id) {
             }else {
                 parentSuccessor->left = successor->right;
             }
-
+            std::cout << "successful" << std::endl;
             delete successor;
             return;
         }
@@ -134,12 +134,14 @@ void AVL::removeUser(int id) {
         if (currentNode->right) {
             this->root = currentNode->right;
             delete currentNode;
+            std::cout << "successful" << std::endl;
             return;
         }
 
         if (currentNode->left) {
             this->root = currentNode->left;
             delete currentNode;
+            std::cout << "successful" << std::endl;
             return;
         }
 
@@ -147,6 +149,7 @@ void AVL::removeUser(int id) {
         if (!currentNode->right && !currentNode->left) {
             this->root = nullptr;
             delete currentNode;
+            std::cout << "successful" << std::endl;
             return;
         }
     } else {
@@ -163,15 +166,23 @@ void AVL::removeUser(int id) {
         } else
             prev->right = child;
         delete currentNode;
+        std::cout << "successful" << std::endl;
     }
 
-    std::cout << "successful" << std::endl;
 }
 
 void AVL::removeInorder(int n) {
-    std::vector<int> inOrderList = helperInOrder(this->root);
-    int target = inOrderList[n];
-    removeUser(target);
+    auto data = helperInOrder(this->root);
+    int target = data.first[n];
+    try
+    {
+        removeUser(target);
+        // std::cout << "successful" << std::endl;
+    } catch (...)
+    {
+        std::cout << "unsuccessful" << std::endl;
+    }
+
 }
 
 int AVL::getHeight(Node* node) {
@@ -242,7 +253,7 @@ AVL::Node* AVL::search(int id) {
 
     while (currentNode != nullptr) {
         if (currentNode->id == id) {
-            std::cout << "successful" << std::endl;
+            std::cout << getName(currentNode)<< std::endl;
             return currentNode;
         } else if (currentNode->id < id) {
             currentNode = currentNode->right;
@@ -255,8 +266,25 @@ AVL::Node* AVL::search(int id) {
     return nullptr;
 }
 
+AVL::Node* AVL::searchNoPrint(int id) {
+    Node* currentNode = this->root;
+
+    while (currentNode != nullptr) {
+        if (currentNode->id == id) {
+            return currentNode;
+        } else if (currentNode->id < id) {
+            currentNode = currentNode->right;
+        } else if (currentNode->id > id) {
+            currentNode = currentNode->left;
+        }
+    }
+
+    return nullptr;
+}
+
 AVL::Node* AVL::search(std::string name) {
-    std::queue<Node*> nodes;
+    auto data = helperInOrder(this->root);
+    bool printed = false;
     // Node* currentNode = this->root;
 
     if (!getRoot()) {
@@ -264,99 +292,106 @@ AVL::Node* AVL::search(std::string name) {
         return nullptr;
     }
 
-    nodes.push(getRoot());
-    while (!nodes.empty()) {
-        Node* currentNode = nodes.front();
-        nodes.pop();
-
-        if (getName(currentNode) == name) {
-            std::cout << "successful" << std::endl;
-            return currentNode;
-        }
-
-        if (currentNode->left)
-            nodes.push(currentNode->left);
-        if (currentNode->right) {
-            nodes.push(currentNode->right);
+    for (size_t i = 0; i < data.second.size(); i++) {
+        if (name == data.second[i]) {
+            printed = true;
+            std::cout << data.first[i] << std::endl;
         }
     }
 
+    if (!printed)
+    {
     std::cout << "unsuccessful" << std::endl;
+    return nullptr;
+    }
+
     return nullptr;
 }
 
 
 //LNR
-void AVL::helperInOrderImplementation(Node *helpRoot, std::vector<int> &output) {
+void AVL::helperInOrderImplementation(Node *helpRoot, std::vector<int> &outputId, std::vector<std::string> &outputName) {
     if (!helpRoot)
         return;
-    helperInOrderImplementation(helpRoot->left, output);
-    output.push_back(helpRoot->id);
-    helperInOrderImplementation(helpRoot->right, output);
+    helperInOrderImplementation(helpRoot->left, outputId, outputName);
+    outputId.push_back(helpRoot->id);
+    outputName.push_back(helpRoot->name);
+    helperInOrderImplementation(helpRoot->right, outputId, outputName);
 }
 
-std::vector<int> AVL::helperInOrder(Node *helpRoot) {
+std::pair<std::vector<int>, std::vector<std::string>> AVL::helperInOrder(Node *helpRoot) {
     std::vector<int> result;
-    helperInOrderImplementation(helpRoot, result);
-    return result;
+    std::vector<std::string> outputName;
+    helperInOrderImplementation(helpRoot, result, outputName);
+    return {result, outputName};
 }
 
 void AVL::printInorder() {
-    std::vector<int> result = helperInOrder(this->root);
+    auto result = helperInOrder(this->root);
 
-    for (int x : result) {
-        std::cout << x << " ";
+
+    for (size_t i = 0; i < result.second.size(); ++i) {
+        if (i > 0) std::cout << ", ";
+        std::cout << result.second[i];
     }
     std::cout << std::endl;
 }
 
 //LRN
-void AVL::helperPostOrderImplementation(Node *helpRoot, std::vector<int> &output) {
+void AVL::helperPostOrderImplementation(Node *helpRoot, std::vector<int> &outputId, std::vector<std::string> &outputName) {
     if (!helpRoot)
         return;
-    helperPostOrderImplementation(helpRoot->left, output);
-    helperPostOrderImplementation(helpRoot->right, output);
-    output.push_back(helpRoot->id);
+    helperPostOrderImplementation(helpRoot->left, outputId, outputName);
+    helperPostOrderImplementation(helpRoot->right, outputId, outputName);
+    outputId.push_back(helpRoot->id);
+    outputName.push_back(helpRoot->name);
 
 }
 
-std::vector<int> AVL::helperPostOrder(Node *helpRoot) {
+std::pair<std::vector<int>, std::vector<std::string>> AVL::helperPostOrder(Node *helpRoot) {
     std::vector<int> result;
-    helperPostOrderImplementation(helpRoot, result);
-    return result;
+    std::vector<std::string> outputName;
+    helperPostOrderImplementation(helpRoot, result, outputName);
+    return {result, outputName};
 }
 
 void AVL::printPostorder() {
-    std::vector<int> result = helperPostOrder(this->root);
+    auto result = helperPostOrder(this->root);
 
-    for (int x : result) {
-        std::cout << x << " ";
+
+    for (size_t i = 0; i < result.second.size(); ++i) {
+        if (i > 0) std::cout << ", ";
+        std::cout << result.second[i];
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
 }
 
 // NLR
-void AVL::helperPreOrderImplementation(Node *helpRoot, std::vector<int> &output) {
+void AVL::helperPreOrderImplementation(Node *helpRoot, std::vector<int> &outputId, std::vector<std::string> &outputName) {
     if (!helpRoot)
         return;
-    output.push_back(helpRoot->id);
-    helperPostOrderImplementation(helpRoot->left, output);
-    helperPostOrderImplementation(helpRoot->right, output);
+    outputId.push_back(helpRoot->id);
+    outputName.push_back(helpRoot->name);
+    helperPreOrderImplementation(helpRoot->left, outputId, outputName);
+    helperPreOrderImplementation(helpRoot->right, outputId, outputName);
 }
 
-std::vector<int> AVL::helperPreOrder(Node *helpRoot) {
+std::pair<std::vector<int>, std::vector<std::string>> AVL::helperPreOrder(Node *helpRoot) {
     std::vector<int> result;
-    helperPreOrderImplementation(helpRoot, result);
-    return result;
+    std::vector<std::string> outputName;
+    helperPreOrderImplementation(helpRoot, result,outputName);
+    return {result, outputName};
 }
 
 void AVL::printPreorder() {
-    std::vector<int> result = helperPreOrder(this->root);
+    auto result = helperPreOrder(this->root);
 
-    for (int x : result) {
-        std::cout << x << " ";
+
+    for (size_t i = 0; i < result.second.size(); ++i) {
+        if (i > 0) std::cout << ", ";
+        std::cout << result.second[i];
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
 }
 
 void AVL::levelCount() {

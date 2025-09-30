@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include <regex>
-#include <unordered_map>
+#include <utility>
 
 #endif //AVLTREE_H
 
@@ -16,7 +16,7 @@ class AVL {
     struct Node {
         std::string name;
         int id;
-        int height = 0;
+        int height = 1;
         Node* left;
         Node* right;
         Node(std::string name, int x) :name(name),  id(x), left(nullptr), right(nullptr){}
@@ -35,18 +35,19 @@ class AVL {
     Node* leftRotation(Node* helpRoot);
     Node* rightRotation(Node* helpRoot);
 
-    void helperInOrderImplementation(Node* helpRoot, std::vector<int>& output);
-    std::vector<int> helperInOrder(Node* helpRoot);
+    void helperInOrderImplementation(Node* helpRoot, std::vector<int>& outputId, std::vector<std::string>& outputNames);
+    std::pair<std::vector<int>, std::vector<std::string>> helperInOrder(Node* helpRoot);
 
-    void helperPostOrderImplementation(Node* helpRoot, std::vector<int>& output);
-    std::vector<int> helperPostOrder(Node* helpRoot);
+    void helperPostOrderImplementation(Node* helpRoot, std::vector<int>& outputId, std::vector<std::string>& outputNames);
+    std::pair<std::vector<int>, std::vector<std::string>> helperPostOrder(Node* helpRoot);
 
-    void helperPreOrderImplementation(Node* helpRoot, std::vector<int>& output);
-    std::vector<int> helperPreOrder(Node* helpRoot);
+    void helperPreOrderImplementation(Node* helpRoot, std::vector<int>& outputId, std::vector<std::string>& outputNames);
+    std::pair<std::vector<int>, std::vector<std::string>> helperPreOrder(Node* helpRoot);
 
     Node* findInOrderSuccessor(Node* node);
     void updateID(Node* node, int id);
     void updateName(Node* node, std::string name);
+    Node* searchNoPrint(int id);
 
 public:
     Node* getRoot();
